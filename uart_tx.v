@@ -27,18 +27,22 @@ module uart_tx(
     output reg data_out
 );
     reg [10:0] temp ;
+    reg busy;
     always @(posedge clk ) begin
             if(rst) begin
-                temp =0;
-                data_out=1;
-            end else if (en) begin
+                temp <=0;
+                data_out<=1;
+            end else if (en && !busy) begin
                 temp[0] <= 1'b0;              // Start bit
                 temp[8:1] <= data_in;         // Data bits
                 temp[9] <= ^data_in;          // Parity bit
                 temp[10] <= 1'b1;             // Stop bit
-            end else  begin
+                busy <=1;
+            end else if (busy) begin
                 data_out <= temp[0];
                 temp <= {1'b1, temp[10:1]};   // Shift right
+                if (temp =11'b111_1111_1111)
+                    busy <= 0;
             end
     end
 endmodule
